@@ -2,7 +2,7 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Urbanisztikai Bullshitszótár</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Courier+Prime:ital@0;1&display=swap');
@@ -66,7 +66,6 @@
     transition: left 0.9s cubic-bezier(0.645, 0.045, 0.355, 1.000);
   }
 
-  /* Nyitott állapot középre tolása */
   .notebook.open {
     left: 210px;
   }
@@ -92,15 +91,14 @@
     transform-style: preserve-3d;
   }
 
-  /* A borító belső, üres oldala */
   .cover-inner {
     position: absolute;
-    inset: 4px 4px 4px 18px; /* Pontosan akkora, mint a jobb oldali lap */
+    inset: 4px 4px 4px 18px;
     background: var(--page-bg);
     transform: rotateY(180deg) translateZ(1px);
     backface-visibility: hidden;
     border-radius: 0 4px 4px 0;
-    box-shadow: inset 1px 0 4px rgba(0,0,0,0.06), -2px 2px 10px rgba(0,0,0,0.08);
+    box-shadow: inset -20px 0 20px -15px rgba(0,0,0,0.25), inset 1px 0 4px rgba(0,0,0,0.06), -2px 2px 10px rgba(0,0,0,0.08);
   }
 
   .cover::before {
@@ -191,7 +189,7 @@
     overflow: hidden;
     opacity: 0;
     transition: opacity 0.3s ease 0.4s;
-    box-shadow: inset -1px 0 4px rgba(0,0,0,0.06), 2px 2px 10px rgba(0,0,0,0.08);
+    box-shadow: inset 20px 0 20px -15px rgba(0,0,0,0.25), inset -1px 0 4px rgba(0,0,0,0.06), 2px 2px 10px rgba(0,0,0,0.08);
   }
   .notebook.open .pages-block { opacity: 1; }
 
@@ -222,7 +220,6 @@
     inset: 0;
     padding: 32px 36px;
     opacity: 0;
-    transition: opacity 0.4s ease;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -230,7 +227,7 @@
     justify-content: center;
     text-align: center;
   }
-  .page-content.visible { opacity: 1; }
+  .page-content.visible { opacity: 1; transition: opacity 0.4s ease; }
 
   .page-letter {
     font-family: 'Times New Roman', serif;
@@ -326,7 +323,7 @@
     position: absolute;
     bottom: 11px;
     left: 18px;
-    right: 70px; /* leave space for page number on the right */
+    right: 70px;
     display: flex;
     justify-content: space-between;
     opacity: 0;
@@ -350,12 +347,11 @@
   }
   .nav-btn:hover { color: var(--red-accent); }
 
-  /* top action buttons row */
   .top-buttons {
     position: absolute;
     top: -44px;
-    left: 45%; /* Középre húzza a bal szélét */
-    transform: translateX(-45%); /* Pontosan a saját közepéhez igazítja */
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     gap: 8px;
     align-items: center;
@@ -408,6 +404,20 @@
     color: #fff;
     background: var(--ink);
     border-color: var(--ink);
+  }
+
+  /* --- MOBIL ÉS KIS KÉPERNYŐ BEÁLLÍTÁSOK --- */
+  @media (max-width: 860px) {
+    .notebook.open {
+      left: 0; /* Ne tolja el a könyvet jobbra, maradjon középen a szöveg */
+    }
+  }
+
+  @media (max-width: 450px) {
+    .scene {
+      /* Kicsinyítsük le arányosan a füzetet, ha a kijelző túl keskeny */
+      transform: scale(calc(100vw / 450));
+    }
   }
 </style>
 </head>
@@ -511,11 +521,15 @@ const navDots = document.getElementById('navDots');
 const closeBtn = document.getElementById('closeBtn');
 const surpriseBtn = document.getElementById('surpriseBtn');
 
-// Build nav dots
 entries.forEach((_, i) => {
   const dot = document.createElement('div');
   dot.className = 'dot' + (i === 0 ? ' active' : '');
-  dot.onclick = () => goToEntry(i);
+  dot.onclick = () => {
+    if (i !== currentIndex && !isAnimating) {
+      const dir = i > currentIndex ? 1 : -1;
+      turnPage(i, dir);
+    }
+  };
   navDots.appendChild(dot);
 });
 
@@ -525,7 +539,7 @@ function updateDots(idx) {
   });
 }
 
-function showEntry(idx, instant = false) {
+function showEntry(idx) {
   const e = entries[idx];
   document.getElementById('pageLetter').textContent = e.letter;
   document.getElementById('entryWord').textContent = e.word;
@@ -543,18 +557,10 @@ function showEntry(idx, instant = false) {
   updateDots(idx);
 }
 
-function goToEntry(idx) {
-  if (idx === currentIndex || isAnimating) return;
-  currentIndex = idx;
-  showEntry(idx);
-  // quick flash
-  pageContent.style.opacity = '0';
-  setTimeout(() => { pageContent.style.opacity = '1'; }, 80);
-}
-
 function navigate(dir) {
+  if (isAnimating) return;
   const newIdx = (currentIndex + dir + entries.length) % entries.length;
-  goToEntry(newIdx);
+  turnPage(newIdx, dir);
 }
 
 function createFlipPage() {
@@ -564,8 +570,74 @@ function createFlipPage() {
   return p;
 }
 
+function turnPage(newIdx, dir) {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  pageContent.style.opacity = '0';
+  pageContent.style.transition = 'opacity 0.2s ease-out';
+
+  const p = createFlipPage();
+  p.style.opacity = '1';
+  p.style.background = 'var(--page-bg)';
+
+  const shadow = document.createElement('div');
+  shadow.style.position = 'absolute';
+  shadow.style.inset = '0';
+  shadow.style.background = 'linear-gradient(to left, rgba(0,0,0,0) 0%, rgba(0,0,0,0.2) 100%)';
+  shadow.style.opacity = '0';
+  shadow.style.transition = 'opacity 0.6s cubic-bezier(0.4, 0.0, 0.2, 1)';
+  p.appendChild(shadow);
+
+  if (dir === 1) { 
+    const clone = pageContent.cloneNode(true);
+    clone.id = '';
+    clone.style.opacity = '1';
+    p.appendChild(clone);
+
+    p.style.transition = 'none';
+    p.style.transform = 'rotateY(0deg)';
+    shadow.style.opacity = '0';
+
+    requestAnimationFrame(() => {
+      p.style.transition = 'transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1)';
+      p.style.transform = 'rotateY(-180deg)';
+      shadow.style.opacity = '1';
+
+      setTimeout(() => {
+        currentIndex = newIdx;
+        showEntry(newIdx);
+        pageContent.style.transition = 'opacity 0.4s ease-in';
+        pageContent.style.opacity = '1';
+        p.remove();
+        isAnimating = false;
+      }, 600);
+    });
+  } else { 
+    p.style.transition = 'none';
+    p.style.transform = 'rotateY(-180deg)';
+    shadow.style.opacity = '1';
+
+    requestAnimationFrame(() => {
+      p.style.transition = 'transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1)';
+      p.style.transform = 'rotateY(0deg)';
+      shadow.style.opacity = '0';
+
+      setTimeout(() => {
+        currentIndex = newIdx;
+        showEntry(newIdx);
+        pageContent.style.transition = 'opacity 0.4s ease-in';
+        pageContent.style.opacity = '1';
+        p.remove();
+        isAnimating = false;
+      }, 600);
+    });
+  }
+}
+
 function animateFlip(targetIdx, done) {
   isAnimating = true;
+  pageContent.style.opacity = '0';
   const totalPages = 18;
   let count = 0;
   const pages = [];
@@ -644,6 +716,7 @@ function closeNotebook() {
   isOpen = false;
 
   pageContent.classList.remove('visible');
+  pageContent.style.opacity = '0';
   navDots.classList.remove('visible');
   closeBtn.classList.remove('visible');
   surpriseBtn.classList.remove('visible');
@@ -659,12 +732,9 @@ function surpriseMe() {
   let newIdx;
   do { newIdx = Math.floor(Math.random() * entries.length); }
   while (newIdx === currentIndex && entries.length > 1);
-  pageContent.style.opacity = '0';
-  setTimeout(() => {
-    currentIndex = newIdx;
-    showEntry(newIdx);
-    pageContent.style.opacity = '1';
-  }, 120);
+  
+  const dir = Math.random() > 0.5 ? 1 : -1;
+  turnPage(newIdx, dir);
 }
 </script>
 </body>
