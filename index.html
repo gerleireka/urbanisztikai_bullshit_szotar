@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urbanisztikai Bullshitszótár</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Courier+Prime:ital@0;1&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --white: #ffffff;
+    --page-bg: #ffffff;
+    --ink: #111111;
+    --faded-ink: #444444;
+    --soft-border: #e0e0e0;
+    --red-accent: #b0292a;
+    --gold1: #c9a84c;
+    --gold2: #f5e6a3;
+    --gold3: #b8860b;
+  }
+
+  body {
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'IM Fell English', serif;
+    overflow: hidden;
+    cursor: default;
+  }
+
+  .scene {
+    perspective: 1200px;
+    width: 420px;
+    height: 560px;
+    position: relative;
+  }
+
+  .hint {
+    position: absolute;
+    bottom: -68px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(0,0,0,0.35);
+    font-size: 13px;
+    font-family: 'Courier Prime', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    animation: pulse 2.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.65} }
+
+  /* ---- NOTEBOOK ---- */
+  .notebook {
+    width: 420px;
+    height: 560px;
+    position: relative;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    left: 0;
+    transition: left 0.9s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+  }
+
+  /* Nyitott állapot középre tolása */
+  .notebook.open {
+    left: 210px;
+  }
+
+  /* COVER */
+  .cover {
+    position: absolute;
+    inset: 0;
+    background: #0a0a0a;
+    border-radius: 3px 8px 8px 3px;
+    box-shadow:
+      -3px 0 6px rgba(0,0,0,0.25),
+      6px 6px 28px rgba(0,0,0,0.22),
+      inset 1px 0 0 rgba(255,255,255,0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    z-index: 10;
+    transition: transform 0.9s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+    transform-origin: left center;
+    transform-style: preserve-3d;
+  }
+
+  /* A borító belső, üres oldala */
+  .cover-inner {
+    position: absolute;
+    inset: 4px 4px 4px 18px; /* Pontosan akkora, mint a jobb oldali lap */
+    background: var(--page-bg);
+    transform: rotateY(180deg) translateZ(1px);
+    backface-visibility: hidden;
+    border-radius: 0 4px 4px 0;
+    box-shadow: inset 1px 0 4px rgba(0,0,0,0.06), -2px 2px 10px rgba(0,0,0,0.08);
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 20px;
+    background: linear-gradient(to right, rgba(255,255,255,0.04) 0%, transparent 100%);
+    border-radius: 3px 0 0 3px;
+    z-index: 2;
+  }
+
+  .cover-shimmer { display: none; }
+
+  .cover-ornament {
+    font-size: 20px;
+    color: var(--gold1);
+    opacity: 0.7;
+    z-index: 4;
+    text-shadow: 0 0 8px rgba(201,168,76,0.4);
+  }
+
+  .cover-title {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.35;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 0 36px;
+    z-index: 4;
+    position: relative;
+    background: linear-gradient(
+      105deg,
+      var(--gold3) 20%,
+      var(--gold1) 35%,
+      var(--gold2) 44%,
+      #fff8dc     50%,
+      var(--gold2) 56%,
+      var(--gold1) 65%,
+      var(--gold3) 80%
+    );
+    background-size: 300% 100%;
+    background-position: 120% 0;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.7));
+    animation: titleShimmer 5s ease-in-out infinite;
+    animation-delay: 1.8s;
+  }
+  @keyframes titleShimmer {
+    0%   { background-position: 120% 0; }
+    40%  { background-position: -20% 0; }
+    100% { background-position: -20% 0; }
+  }
+
+  .cover-subtitle {
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px;
+    color: rgba(201,168,76,0.45);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    z-index: 4;
+  }
+
+  .notebook.open .cover {
+    transform: rotateY(-175deg);
+    box-shadow: none;
+  }
+
+  /* PAGES BLOCK */
+  .pages-block {
+    position: absolute;
+    inset: 4px 4px 4px 18px;
+    background: var(--page-bg);
+    border-radius: 0 4px 4px 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease 0.4s;
+    box-shadow: inset -1px 0 4px rgba(0,0,0,0.06), 2px 2px 10px rgba(0,0,0,0.08);
+  }
+  .notebook.open .pages-block { opacity: 1; }
+
+  .ruled-bg {
+    position: absolute;
+    inset: 0;
+    background: var(--page-bg);
+  }
+
+  .flip-pages {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .flip-page {
+    position: absolute;
+    inset: 0;
+    background: #f8f8f8;
+    transform-origin: left center;
+    transform: rotateY(0deg);
+    backface-visibility: hidden;
+    opacity: 0;
+  }
+
+  .page-content {
+    position: absolute;
+    inset: 0;
+    padding: 32px 36px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .page-content.visible { opacity: 1; }
+
+  .page-letter {
+    font-family: 'Times New Roman', serif;
+    font-size: 56px;
+    font-weight: bold;
+    color: rgba(0,0,0,0.05);
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .entry-word {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--ink);
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+
+  .entry-phonetic {
+    font-family: 'Courier Prime', monospace;
+    font-size: 11.5px;
+    color: #777;
+    font-style: italic;
+    margin-bottom: 5px;
+  }
+
+  .entry-pos {
+    font-family: 'IM Fell English', serif;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--red-accent);
+    margin-bottom: 14px;
+  }
+
+  .entry-def {
+    font-family: 'IM Fell English', serif;
+    font-size: 14px;
+    color: var(--faded-ink);
+    line-height: 1.7;
+    border-top: 1px solid var(--soft-border);
+    padding-top: 14px;
+    max-width: 300px;
+  }
+
+  .entry-note {
+    font-family: 'Courier Prime', monospace;
+    font-size: 11px;
+    color: #999;
+    margin-top: 12px;
+    font-style: italic;
+    line-height: 1.5;
+    max-width: 280px;
+  }
+
+  .page-num {
+    position: absolute;
+    bottom: 14px;
+    right: 18px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px;
+    color: rgba(0,0,0,0.25);
+    letter-spacing: 2px;
+  }
+
+  .nav-dots {
+    position: absolute;
+    bottom: -44px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .nav-dots.visible { opacity: 1; }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .dot.active {
+    background: rgba(0,0,0,0.65);
+    transform: scale(1.3);
+  }
+
+  .nav-arrows {
+    position: absolute;
+    bottom: 11px;
+    left: 18px;
+    right: 70px; /* leave space for page number on the right */
+    display: flex;
+    justify-content: space-between;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .page-content.visible .nav-arrows {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .nav-btn {
+    font-family: 'Courier Prime', monospace;
+    font-size: 11px;
+    color: rgba(0,0,0,0.35);
+    cursor: pointer;
+    letter-spacing: 1px;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    transition: color 0.2s;
+  }
+  .nav-btn:hover { color: var(--red-accent); }
+
+  /* top action buttons row */
+  .top-buttons {
+    position: absolute;
+    top: -44px;
+    left: 45%; /* Középre húzza a bal szélét */
+    transform: translateX(-45%); /* Pontosan a saját közepéhez igazítja */
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .close-btn {
+    font-family: 'Courier Prime', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.4);
+    background: none;
+    border: 1px solid rgba(0,0,0,0.18);
+    border-radius: 3px;
+    padding: 5px 12px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, color 0.2s, border-color 0.2s;
+  }
+  .close-btn.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .close-btn:hover {
+    color: var(--red-accent);
+    border-color: var(--red-accent);
+  }
+
+  .surprise-btn {
+    font-family: 'Courier Prime', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.55);
+    background: none;
+    border: 1px solid rgba(0,0,0,0.25);
+    border-radius: 3px;
+    padding: 5px 12px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .surprise-btn.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .surprise-btn:hover {
+    color: #fff;
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="notebook" id="notebook">
+    <div class="cover" id="cover">
+      <div class="cover-inner"></div>
+      <div class="cover-shimmer"></div>
+      <div class="cover-ornament">✦</div>
+      <div class="cover-title">Urbanisztikai<br>Bullshitszótár</div>
+      <div class="cover-subtitle">kattints a nyitáshoz</div>
+      <div class="cover-ornament">✦</div>
+    </div>
+
+    <div class="pages-block">
+      <div class="ruled-bg"></div>
+      <div class="flip-pages" id="flipPages"></div>
+      <div class="page-content" id="pageContent">
+        <div class="page-letter" id="pageLetter"></div>
+        <div class="entry-word" id="entryWord"></div>
+        <div class="entry-phonetic" id="entryPhonetic"></div>
+        <div class="entry-pos" id="entryPos"></div>
+        <div class="entry-def" id="entryDef"></div>
+        <div class="entry-note" id="entryNote"></div>
+        <div class="page-num" id="pageNum"></div>
+        <div class="nav-arrows">
+          <button class="nav-btn" onclick="navigate(-1)">← előző</button>
+          <button class="nav-btn" onclick="navigate(1)">következő →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hint" id="hint">kattints a megnyitáshoz</div>
+  <div class="nav-dots" id="navDots"></div>
+  <div class="top-buttons">
+    <button class="surprise-btn" id="surpriseBtn" onclick="surpriseMe()">✦ Lepj meg!</button>
+    <button class="close-btn" id="closeBtn" onclick="closeNotebook()">✕ becsuk</button>
+  </div>
+</div>
+
+<script>
+const entries = [
+  { word: "Adaptív utca", phonetic: "[ˈɒdɒptiv ˈut͡sɒ]", pos: "főnév", def: "Ha a tervezési területen van egy jelentős utca, és fogalmad sincs, hogy mit kezdj vele, azonban rákérdeznek mi a terved, pánikszerűen ezt mondd.", note: null, letter: "A" },
+  { word: "Bilbao effect", phonetic: "[bilˈbɒʊi ˈɛfɛkt]", pos: "főnév", def: "Ezt a kifejezést akkor használod amikor nem tudod mivel megmagyarázni, hogy a csúnya épületed miért nem illeszkedik a városi környezethez, és nem akarsz valami mást kitalálni.", note: null, letter: "B" },
+  { word: "Bottom up", phonetic: "[ˌbɒtəm ˈʌp]", pos: "kifejezés", def: "A top down ellenkezője.", note: null, letter: "B" },
+  { word: "Brainstorming", phonetic: "[ˈbreɪnˌstɔːrmɪŋ]", pos: "ige", def: "Akkor csinálják amikor senkinek sincs egy épkézláb ötlete sem a tervezés elkezdésére. Elméletben ez egy kreatív és dinamikus tevékenység, a gyakorlatban ilyenkor mindenki csak abban reménykedik, hogy lesz egy ember, akinek van mondanivalója.", note: null, letter: "B" },
+  { word: "Célrendszer", phonetic: "[ˈtseːlˌrɛnd͡sɛr]", pos: "főnév", def: "Amikor valódi munkát nem szeretnél végezni, akkor mindenképpen állíts össze egy célrendszert. Mindenki szereti, mindenki imádja… de mindenbe bele fognak kötni. Nyersz magadnak vele pár nap haladékot.", note: "Léteznek ún. fordított célrendszerek is, amit a mai napig nem érti senki, valószínűleg a feltalálói sem.", letter: "C" },
+  { word: "Co-working space", phonetic: "[koʊˈwɜːrkɪŋ speɪs]", pos: "főnév", def: "Valójában még soha senki nem dolgozott valódi co-working space-ben a szerzők közül. Összetevői: egy helyiség, kávé, laptop. Nevezhetnénk akár internet kávézónak is!", note: null, letter: "C" },
+  { word: "Ez egy újra!", phonetic: "[ɛz ɛɟ ˈujrɒ]", pos: "kifejezés", def: "Miért? Te mit csináltál éjfél és a reggel nyolcas leadás között?", note: null, letter: "E" },
+  { word: "Ez szép?", phonetic: "[ɛz ˈseːp]", pos: "kifejezés", def: "Tegye fel a kezét aki szerint ez szép? És aki szerint nem? Jó és aki nem tette fel a kezét?", note: "Az »Ez szép?« egy beugratós kérdés, valójában nincs rá jó válasz.", letter: "E" },
+  { word: "Forgalomtechnika", phonetic: "[ˈforɡɒlomtɛxnɪkɒ]", pos: "főnév", def: "Kifejezetten akkor használjuk, amikor a közlekedési témakör túl komplex és se nem megérteni, se nem kitalálni vagy részletesebben elmondani nem akarjuk.", note: null, letter: "F" },
+  { word: "Fenntartható", phonetic: "[ˈfɛntɒrˌtɒ]", pos: "melléknév", def: "A fenntarthatóság fogalma egy rendkívül komplex, multilaterális diskurzus, amely a holisztikus perspektívák szintetikus összefonódására épül. A decentralizált hatalomgyakorlás és a participatív modellek lehetőséget teremtenek a közösségi innovációk kibontakozására.", note: "Ha nem érted nem baj, mi se, a lényeg, hogy második mondatod előtt legyen ott!", letter: "F" },
+  { word: "Genius loci", phonetic: "[ˈdʒiːniəs ˈloʊsaɪ]", pos: "kifejezés", def: "Véleményünk szerint ez egy szekta nevét fedi.", note: null, letter: "G" },
+  { word: "Hídfőtérség", phonetic: "[ˈhiːd.føː.teːr.ʃeːɡ]", pos: "főnév", def: "Ha a tervezési terület közelében van egy híd, akkor mindenképp ez fog kerülni középpontba. Valószínűleg egyáltalán nem akarsz majd vele foglalkozni, de a hídfőtérség olyan mint egy popsztár, az összes figyelmet rá szegeződik.", note: "Egy potenciális elnevezés az ország tortájára.", letter: "H" },
+  { word: "Hívószó", phonetic: "[ˈhiːvoːˌs͡wo]", pos: "főnév", def: "Olyan kifejezés, amelyet akkor használnak, amikor valaki nem rendelkezik elegendő információval egy témáról, de szeretne véleményt formálni vagy kritizálni. Gyakran előfordul: »Nem értem a koncepciót, hiányzik a hívószó.«", note: null, letter: "H" },
+  { word: "Hivatásforgalmi kerékpárút", phonetic: "[ˈhivɑtɑʃforɡɑlmi ˈkɛrɛkpaːruːt]", pos: "főnév", def: "Öltönyös aktatáskás emberek szigorú arccal kerékpároznak az iroda felé.", note: null, letter: "H" },
+  { word: "Humáninfrastruktúra", phonetic: "[ˈhumɑːnˌinfraʃtrukt̪uːrɒ]", pos: "főnév", def: "Ha az infrastruktúra szót túl műszakinak érzed, akkor tedd elé, hogy humán.", note: null, letter: "H" },
+  { word: "Identitás", phonetic: "[iˈdɛntitɑːʃ]", pos: "főnév", def: "Ha elkap egy szentimentális pillanat és filozofálnál kicsit, akkor megfelelő alkalom bedobni az identitás témakörét.", note: "Veszélyes lehet, egyesek nagyon be tudnak rá lelkesedni és akkor akár az egész szakdolgozatod témája ez lesz.", letter: "I" },
+  { word: "Intermodális csomópont", phonetic: "[ˈintɛrmɔːdɒliʃ ˈtʃomoːpoɲt]", pos: "főnév", def: "Autók?? Buszok?? villamos?! biciklisek?!! TROLI?! Ugyanott?? Ugyanakkor?? Te jó ég az ott egy CARSHARING PARKOLÓ??", note: "Rajta vagyunk a tényleges fogalom megtalálásán.", letter: "I" },
+  { word: "Innovációs campus", phonetic: "[ˌinːovɑːt͡siˈoːʃ ˈkɒmpus]", pos: "főnév", def: "Ha már a campus szó se segít…", note: null, letter: "I" },
+  { word: "Interdiszciplináris", phonetic: "[ˈintɛrdiʃt͡sipliˌnaːriʃ]", pos: "melléknév", def: "Interdiszciplináris tervező intézményesített intermodális infrastruktúrát implementál intenzív városszövetben. (×3)", note: null, letter: "I" },
+  { word: "Kire tervezünk", phonetic: "[ˈkirɛ ˈtɛrvɛzn̩k]", pos: "kifejezés", def: "A végén mindig az a válasz, hogy egy kicsit mindenkire.", note: null, letter: "K" },
+  { word: "Klímapozitív", phonetic: "[ˈkliːmɒpoziˌtiːv]", pos: "melléknév", def: "Nagyon sok a növény.", note: null, letter: "K" },
+  { word: "Kognitív város", phonetic: "[ˈkognitiːv ˈvaːroʃ]", pos: "főnév", def: "Ha már valaki használta a »kompakt« és az »okos« jelzőt, akkor még ezt be tudod vetni.", note: null, letter: "K" },
+  { word: "Kompakt város", phonetic: "[ˈkompɒkt ˈvaːroʃ]", pos: "főnév", def: "Nem, sosem lesz kompakt, de jól hangzik.", note: null, letter: "K" },
+  { word: "Meanderező", phonetic: "[ˈmɛɒndɛrɛzøː]", pos: "melléknév", def: "Ilyen… hullámos folyó.", note: null, letter: "M" },
+  { word: "Méhlegelő", phonetic: "[ˈmeːhlɛɡɛlɛø]", pos: "főnév", def: "Where bees are having fun!", note: null, letter: "M" },
+  { word: "Mindmap", phonetic: "[ˈmaɪndˌmæp]", pos: "főnév", def: "Akkor készíted amikor szeretnéd elhitetni, hogy a bejárás végi prezentáción az 5 perc alatt firkált kusza vonalaid egy komoly tervezési folyamat részei.", note: null, letter: "M" },
+  { word: "Mikromobilitás", phonetic: "[ˈmikroːmɔbilitɒːʃ]", pos: "főnév", def: "Tudom, hogy nagyon csábító azt mondani, hogy »a tervezés során átfogó és fenntartható mikromobilitási hálózat jött létre«… de mindenki tudja, hogy ez azt jelenti, hogy lett kerékpárút.", note: null, letter: "M" },
+  { word: "Miro", phonetic: "[ˈmiːroʊ]", pos: "melléknév", def: "A Miro az eszköz abban az esetben, amit akkor használsz, ha valaki azt mondja neked, hogy pauszon kéri az ábrázolást.", note: "Úgyis le kell rajzolnod pauszra, de te minden esetben ezt fogod választani.", letter: "M" },
+  { word: "Patakrevitalizáció", phonetic: "[ˈpɒtɒkˌrɛvitɑlizɒˈt͡si.oː]", pos: "főnév", def: "Amikor szeretnéd elmondani, hogy újraélesztitek a patakot, de igazából csak kiszeditek belőle a bevásárlókocsit, odébb toljátok a gázcsövet, és raktok mellé egy információs táblát »Ökológiai folyosó fejlesztése« felirattal.", note: "Ez a szó inspirálta az urbanisztikai bullshit szótár létrejöttét. Köszönet Szczuka Levente tanárúrnak az »urbanisztikai bullshitszótár« kifejezés megalkotójának!", letter: "P" },
+  { word: "Perszóna", phonetic: "[ˈpɛrszoːnɒ]", pos: "melléknév", def: "Avagy a tervezési területen alapvetően mindig csak 3 féle embertípus lakik: Mari nénik, Jóska bácsik és a fiatalok.", note: null, letter: "P" },
+  { word: "Placemaking", phonetic: "[ˈpleɪsˌmeɪkɪŋ]", pos: "főnév", def: "Ezt a szót a bécsi kollégáinktól tanultuk… sajnos mi nem tudjuk mit jelent.", note: null, letter: "P" },
+  { word: "Plasztikus", phonetic: "[ˈplɑs.ti.kus]", pos: "melléknév", def: "Építészes szó, mi nem nagyon használjuk, igazából, mit keres itt?", note: null, letter: "P" },
+  { word: "Pocket park", phonetic: "[ˈpɒkɪt ˌpɑːrk]", pos: "főnév", def: "A tájépítészmérnök kollégáknál mindig van, zsebből bármikor kivehető park.", note: null, letter: "P" },
+  { word: "Semi-private", phonetic: "[ˌsɛmiˈpraɪvɪt]", pos: "főnév", def: "Privát. Valamennyire. Vagy talán mégsem. Használd, ha még nem tudod eldönteni.", note: null, letter: "S" },
+  { word: "Smart city", phonetic: "[ˌsmɑːrt ˈsɪti]", pos: "főnév", def: "A hyperkognitív urbanomatrix a 21. századi digitális szenzorfluktuáció paradigmájaként értelmezhető, ahol a városi infoparadigmák és a bioadaptív infrastruktúrahálózatok szinergikus összjátékban működnek.", note: null, letter: "S" },
+  { word: "Stakeholders", phonetic: "[steɪkˌhoʊldərz]", pos: "főnév", def: "Azok a személyek akik a projekt végén azt mondják: »én ezt máshogy csináltam volna«.", note: null, letter: "S" },
+  { word: "Szoborszerű", phonetic: "[ˈsoːborˌsɛrɰɯː]", pos: "melléknév", def: "»Te« tartod fenn a »Beadandóid« súlyát — akárcsak Atlasz az égboltot.", note: null, letter: "S" },
+  { word: "Taktikai urbanizmus", phonetic: "[ˈtɒktikɑːli ˌurbɒnizmus]", pos: "főnév", def: "Abban az esetben használjuk, amikor tudjuk, hogy nincsen keret komoly alakításokat végezni. Ne kérdezz rá, mert akkor a szótárban található összes szó kimondódik.", note: null, letter: "T" },
+  { word: "Top-down", phonetic: "[ˌtɒp ˈdaʊn]", pos: "melléknév", def: "A bottom-up ellenkezője.", note: null, letter: "T" },
+  { word: "Vízió", phonetic: "[ˈviːzioː]", pos: "főnév", def: "ötlet → elképzelés → koncepció → vízió. Ugyanaz a tartalom, egyre kozmikusabb csomagolásban.", note: null, letter: "V" },
+  { word: "Wrap up", phonetic: "[ˈræpʌp]", pos: "főnév", def: "VIGYÁZAT! Egy »gyors wrapup« bármikor közbejöhet, kiemelten fontos, hogy ha ezt a szót hallod akkor azt a semmit kell bemutatnod amin egész nap dolgoztál. Ilyenkor javasolt elővenni a kezedben tartott szótárat.", note: null, letter: "W" },
+  { word: "Workshop", phonetic: "[ˈwɜːrkʃɒp]", pos: "főnév", def: "Több évnyi workshopolás után a szerzők profinak számítanak a témában, azonban most elárulják az igazat: valójában csak beszélgettünk… általában nem a témáról… de még csak nem is a településtervezésről.", note: "Innen is szeretnénk elnézést kérni mindenkitől.", letter: "W" },
+  { word: "Zöldút", phonetic: "[ˈzoːlduːt]", pos: "főnév", def: "Légy erős kérlek… nagyon sajnálom de, a zöld út valójában… nem egy zöld színű út.", note: null, letter: "Z" },
+  { word: "Zöldinfrastruktúra", phonetic: "[ˈzøld.infrastruktuːrɒ]", pos: "főnév", def: "Zöld, infrastruktúra.", note: null, letter: "Z" }
+];
+
+let currentIndex = 0;
+let isOpen = false;
+let isAnimating = false;
+
+const notebook = document.getElementById('notebook');
+const cover = document.getElementById('cover');
+const flipPages = document.getElementById('flipPages');
+const pageContent = document.getElementById('pageContent');
+const hint = document.getElementById('hint');
+const navDots = document.getElementById('navDots');
+const closeBtn = document.getElementById('closeBtn');
+const surpriseBtn = document.getElementById('surpriseBtn');
+
+// Build nav dots
+entries.forEach((_, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (i === 0 ? ' active' : '');
+  dot.onclick = () => goToEntry(i);
+  navDots.appendChild(dot);
+});
+
+function updateDots(idx) {
+  document.querySelectorAll('.dot').forEach((d, i) => {
+    d.classList.toggle('active', i === idx);
+  });
+}
+
+function showEntry(idx, instant = false) {
+  const e = entries[idx];
+  document.getElementById('pageLetter').textContent = e.letter;
+  document.getElementById('entryWord').textContent = e.word;
+  document.getElementById('entryPhonetic').textContent = e.phonetic;
+  document.getElementById('entryPos').textContent = e.pos;
+  document.getElementById('entryDef').textContent = e.def;
+  const noteEl = document.getElementById('entryNote');
+  if (e.note) {
+    noteEl.textContent = '↳ ' + e.note;
+    noteEl.style.display = 'block';
+  } else {
+    noteEl.style.display = 'none';
+  }
+  document.getElementById('pageNum').textContent = (idx + 1) + ' / ' + entries.length;
+  updateDots(idx);
+}
+
+function goToEntry(idx) {
+  if (idx === currentIndex || isAnimating) return;
+  currentIndex = idx;
+  showEntry(idx);
+  // quick flash
+  pageContent.style.opacity = '0';
+  setTimeout(() => { pageContent.style.opacity = '1'; }, 80);
+}
+
+function navigate(dir) {
+  const newIdx = (currentIndex + dir + entries.length) % entries.length;
+  goToEntry(newIdx);
+}
+
+function createFlipPage() {
+  const p = document.createElement('div');
+  p.className = 'flip-page';
+  flipPages.appendChild(p);
+  return p;
+}
+
+function animateFlip(targetIdx, done) {
+  isAnimating = true;
+  const totalPages = 18;
+  let count = 0;
+  const pages = [];
+
+  function flipOne() {
+    if (count >= totalPages) {
+      pages.forEach(p => p.remove());
+      isAnimating = false;
+      done();
+      return;
+    }
+    const p = createFlipPage();
+    pages.push(p);
+    const shade = 220 + Math.floor(Math.random() * 30);
+    p.style.background = `rgb(${shade},${shade-8},${shade-18})`;
+    p.style.opacity = '1';
+
+    p.style.transition = 'none';
+    p.style.transform = 'rotateY(0deg)';
+    p.style.zIndex = 50 + count;
+
+    requestAnimationFrame(() => {
+      const dur = 40 + Math.random() * 60;
+      p.style.transition = `transform ${dur}ms ease-in`;
+      p.style.transform = 'rotateY(-170deg)';
+      setTimeout(() => {
+        p.style.opacity = '0';
+      }, dur * 0.6);
+    });
+
+    count++;
+    const delay = 30 + Math.random() * 50;
+    setTimeout(flipOne, delay);
+  }
+
+  flipOne();
+
+  const midPoint = totalPages * 0.6 * 50;
+  setTimeout(() => {
+    showEntry(targetIdx);
+  }, midPoint);
+}
+
+notebook.addEventListener('click', (e) => {
+  if (!isOpen) {
+    openNotebook();
+  }
+});
+
+function openNotebook() {
+  if (isOpen || isAnimating) return;
+  isAnimating = true;
+  hint.style.opacity = '0';
+
+  notebook.classList.add('open');
+
+  const target = Math.floor(Math.random() * entries.length);
+
+  setTimeout(() => {
+    animateFlip(target, () => {
+      currentIndex = target;
+      pageContent.classList.add('visible');
+      navDots.classList.add('visible');
+      closeBtn.classList.add('visible');
+      surpriseBtn.classList.add('visible');
+      hint.textContent = 'kattints tovább a nyilakkal';
+      hint.style.opacity = '0.4';
+      isOpen = true;
+      isAnimating = false;
+    });
+  }, 600);
+}
+
+function closeNotebook() {
+  if (!isOpen || isAnimating) return;
+  isOpen = false;
+
+  pageContent.classList.remove('visible');
+  navDots.classList.remove('visible');
+  closeBtn.classList.remove('visible');
+  surpriseBtn.classList.remove('visible');
+
+  notebook.classList.remove('open');
+
+  hint.textContent = 'kattints a megnyitáshoz';
+  hint.style.opacity = '0.3';
+}
+
+function surpriseMe() {
+  if (!isOpen || isAnimating) return;
+  let newIdx;
+  do { newIdx = Math.floor(Math.random() * entries.length); }
+  while (newIdx === currentIndex && entries.length > 1);
+  pageContent.style.opacity = '0';
+  setTimeout(() => {
+    currentIndex = newIdx;
+    showEntry(newIdx);
+    pageContent.style.opacity = '1';
+  }, 120);
+}
+</script>
+</body>
+</html>
