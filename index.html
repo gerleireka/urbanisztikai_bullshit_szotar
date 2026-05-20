@@ -290,13 +290,13 @@
   }
 
   .page-num {
-    position: absolute;
-    bottom: 14px;
-    right: 18px;
     font-family: 'Courier Prime', monospace;
     font-size: 10px;
     color: rgba(0,0,0,0.25);
     letter-spacing: 2px;
+    text-align: center;
+    flex: 1;
+    pointer-events: none;
   }
 
   .nav-dots {
@@ -324,11 +324,14 @@
 
   .nav-arrows {
     position: absolute;
-    bottom: 11px;
-    left: 18px;
-    right: 70px; /* leave space for page number on the right */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
     display: flex;
+    align-items: center;
     justify-content: space-between;
+    padding: 0 18px;
     opacity: 0;
     transition: opacity 0.3s;
     pointer-events: none;
@@ -346,7 +349,11 @@
     background: none;
     border: none;
     padding: 2px 4px;
+    min-width: 70px;
     transition: color 0.2s;
+  }
+  .nav-btn:last-child {
+    text-align: right;
   }
   .nav-btn:hover { color: var(--red-accent); }
 
@@ -409,6 +416,177 @@
     background: var(--ink);
     border-color: var(--ink);
   }
+
+  /* =====================
+     MOBILE LAYOUT
+     ===================== */
+  @media (max-width: 600px) {
+    body {
+      overflow: hidden;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    /* Full-screen scene: flex column, gombok felül, notebook alatta */
+    .scene {
+      width: 100vw;
+      height: 100dvh;
+      perspective: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px 52px;
+      box-sizing: border-box;
+    }
+
+    /* Notebook fills remaining space */
+    .notebook {
+      width: 100%;
+      max-width: 400px;
+      flex: 1;
+      max-height: 580px;
+      left: 0 !important;
+      transition: none;
+    }
+
+    /* Override open shift — no lateral movement on mobile */
+    .notebook.open {
+      left: 0 !important;
+    }
+
+    .cover {
+      border-radius: 3px 10px 10px 3px;
+    }
+
+    .cover-title {
+      font-size: 20px;
+      padding: 0 28px;
+      letter-spacing: 2px;
+    }
+
+    /* Pages block matches notebook */
+    .pages-block {
+      inset: 4px 4px 4px 16px;
+    }
+
+    .cover-inner {
+      inset: 4px 4px 4px 16px;
+    }
+
+    /* Bigger, readable content */
+    .page-content {
+      padding: 28px 24px 52px;
+    }
+
+    .page-letter {
+      font-size: 48px;
+      top: 8px;
+      right: 12px;
+    }
+
+    .entry-word {
+      font-size: 26px;
+      margin-bottom: 6px;
+    }
+
+    .entry-phonetic {
+      font-size: 11px;
+    }
+
+    .entry-pos {
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .entry-def {
+      font-size: 13.5px;
+      line-height: 1.75;
+      max-width: 100%;
+      padding-top: 12px;
+    }
+
+    .entry-note {
+      font-size: 11px;
+      max-width: 100%;
+      margin-top: 10px;
+    }
+
+    /* Nav sor: előző | oldalszám | következő — egy sorban */
+    .nav-arrows {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+    }
+
+    .nav-btn {
+      font-size: 12px;
+      padding: 0;
+      min-width: 80px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-btn:last-child {
+      justify-content: flex-end;
+    }
+
+    /* Oldalszám — örökli a desktop flex-center stílust, csak méretet igazítunk */
+    .page-num {
+      font-size: 10px;
+    }
+
+    /* Top buttons — a notebook FÖLÖTT, a flex sorrendben */
+    .top-buttons {
+      position: static;
+      transform: none;
+      order: -1;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 10px;
+      /* mindig látható helyen, de opacity a js vezérli */
+    }
+
+    .close-btn,
+    .surprise-btn {
+      font-size: 11px;
+      padding: 8px 14px;
+      min-height: 40px;
+    }
+
+    /* Hint és nav-dots — notebook alatt, static pozícióban */
+    .hint {
+      position: static;
+      transform: none;
+      margin-top: 10px;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-align: center;
+    }
+
+    .nav-dots {
+      position: static;
+      transform: none;
+      margin-top: 6px;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -434,9 +612,9 @@
         <div class="entry-pos" id="entryPos"></div>
         <div class="entry-def" id="entryDef"></div>
         <div class="entry-note" id="entryNote"></div>
-        <div class="page-num" id="pageNum"></div>
         <div class="nav-arrows">
           <button class="nav-btn" onclick="navigate(-1)">← előző</button>
+          <div class="page-num" id="pageNum"></div>
           <button class="nav-btn" onclick="navigate(1)">következő →</button>
         </div>
       </div>
@@ -615,6 +793,10 @@ notebook.addEventListener('click', (e) => {
   }
 });
 
+function isMobile() {
+  return window.innerWidth <= 600;
+}
+
 function openNotebook() {
   if (isOpen || isAnimating) return;
   isAnimating = true;
@@ -666,6 +848,25 @@ function surpriseMe() {
     pageContent.style.opacity = '1';
   }, 120);
 }
+
+// Touch swipe support for mobile
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+  if (!isOpen) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  // Only horizontal swipes (not scrolls)
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    navigate(dx < 0 ? 1 : -1);
+  }
+}, { passive: true });
 </script>
 </body>
 </html>
